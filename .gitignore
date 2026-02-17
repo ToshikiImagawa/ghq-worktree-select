@@ -1,0 +1,19 @@
+# macOS
+.DS_Store
+
+# IDEs
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# Temporary files
+*.tmp
+*.bak
+
+# env files
+.envrc
+
+# Local settings for Claude
+*.local.json
