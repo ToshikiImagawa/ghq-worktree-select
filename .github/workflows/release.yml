@@ -77,22 +77,5 @@ jobs:
             ## ${{ steps.version.outputs.VERSION }}
 
             ${{ steps.changelog.outputs.RELEASE_NOTES }}
-
-            ---
-
-            ### インストール
-
-            ```bash
-            # Homebrewでインストール（推奨）
-            brew tap ToshikiImagawa/ghq-worktree-select
-            brew install ghq-worktree-select
-            ```
-
-            ### 手動インストール
-
-            ```bash
-            curl -o ~/.local/bin/ghq-worktree-select https://raw.githubusercontent.com/ToshikiImagawa/ghq-worktree-select/${{ steps.version.outputs.VERSION }}/ghq-worktree-select.sh
-            chmod +x ~/.local/bin/ghq-worktree-select
-            ```
           draft: false
           prerelease: false
