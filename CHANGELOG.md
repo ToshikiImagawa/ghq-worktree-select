@@ -7,6 +7,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [1.2.0] - 2026-02-18
+
+### Added
+- New branch creation feature directly from the fzf interface
+  - Select "+ Create new branch..." from the branch list to create a new branch and worktree in one operation
+  - Branch name validation (format check, duplicate check)
+  - Base branch selection functionality
+  - Symlink feature automatically applied to newly created branches
+
+### Changed
+- Updated help message with new branch creation feature description
+- Added usage instructions for the new feature to README.md
+
 ## [1.1.0] - 2026-02-17
 
 ### Added

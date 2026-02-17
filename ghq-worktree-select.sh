@@ -2,7 +2,7 @@
 # ghq-worktree-select - Select a branch from ghq-managed repositories and create a worktree
 
 # Version information
-GHQ_WORKTREE_SELECT_VERSION="1.1.0"
+GHQ_WORKTREE_SELECT_VERSION="1.2.0"
 
 # Show help
 _ghq_worktree_select_show_help() {
