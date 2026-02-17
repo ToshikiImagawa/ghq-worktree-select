@@ -24,30 +24,30 @@ jobs:
         run: |
           VERSION="${{ steps.version.outputs.VERSION }}"
 
-          # CHANGELOG.mdが存在しない場合はデフォルトメッセージ
+          # Default message if CHANGELOG.md doesn't exist
           if [ ! -f CHANGELOG.md ]; then
-            echo "CHANGELOG.mdが見つかりません" > /tmp/release_notes.md
+            echo "CHANGELOG.md not found" > /tmp/release_notes.md
             echo "EOF<<RELEASE_NOTES" >> $GITHUB_OUTPUT
             cat /tmp/release_notes.md >> $GITHUB_OUTPUT
             echo "RELEASE_NOTES" >> $GITHUB_OUTPUT
             exit 0
           fi
 
-          # CHANGELOG.mdから該当バージョンのセクションを抽出
-          # Keep a Changelog形式を想定: ## [バージョン] - 日付
+          # Extract the version section from CHANGELOG.md
+          # Assumes Keep a Changelog format: ## [version] - date
           awk -v version="$VERSION" '
             BEGIN { found=0; content="" }
-            # バージョンセクションの開始を検出
+            # Detect version section start
             /^## \[/ {
               if (found) exit
-              # [v1.0.0] または [1.0.0] の両方に対応
+              # Support both [v1.0.0] and [1.0.0] formats
               gsub(/\[v?/, "[", $0)
               if (index($0, "[" version "]") > 0 || index($0, "[" substr(version, 2) "]") > 0) {
                 found=1
                 next
               }
             }
-            # 次のバージョンセクションまでの内容を収集
+            # Collect content until next version section
             found && /^## \[/ { exit }
             found {
               if (content != "") content = content "\n"
@@ -55,14 +55,14 @@ jobs:
             }
             END {
               if (content != "") print content
-              else print "このバージョンのCHANGELOG情報が見つかりませんでした。"
+              else print "No changelog entry found for this version."
             }
           ' CHANGELOG.md > /tmp/release_notes.md
 
-          # 先頭と末尾の空白行を削除
+          # Remove leading and trailing blank lines
           perl -i -pe 's/^\s*$//g; s/^\n+//; s/\n+$/\n/' /tmp/release_notes.md
 
-          # GitHub Outputに設定（multiline対応）
+          # Set GitHub Output (multiline support)
           {
             echo "RELEASE_NOTES<<EOF"
             cat /tmp/release_notes.md

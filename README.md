@@ -106,6 +106,42 @@ This allows sharing local configuration files from the main branch across all wo
 - Warnings will be displayed if source files don't exist, but processing continues
 - Symlinks are not created when creating worktrees for the main or master branch itself
 
+### Security Restrictions
+
+For security reasons, the following path types are **not allowed** in `.ghq-worktree-symlinks`:
+
+- ❌ Absolute paths (e.g., `/etc/passwd`, `/home/user/file`)
+- ❌ Parent directory references (e.g., `../config`, `../../secret`)
+- ❌ Paths starting with special characters (e.g., `~/.bashrc`, `$HOME/file`)
+
+Only relative paths within the repository are allowed. Invalid paths will be skipped with a warning message.
+
+**Example:**
+```
+# ✅ Valid - relative paths only
+.envrc
+config/local.yml
+.env
+
+# ❌ Invalid - will be rejected
+/etc/hosts
+../../../etc/passwd
+~/.ssh/config
+```
+
+### Troubleshooting
+
+**Symlinks not created:**
+- Check that `.ghq-worktree-symlinks` is in the main/master branch
+- Verify file permissions on the config file
+- Ensure paths are relative and don't contain `..` or absolute paths
+
+**To remove symlinks:**
+```bash
+# Find and remove symlinks in current directory
+find . -type l -delete
+```
+
 ## Uninstall
 
 ```bash

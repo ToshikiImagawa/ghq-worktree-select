@@ -98,6 +98,28 @@ _find_main_worktree() {
   echo "$repo_path"
 }
 
+# Validate file path for security
+_validate_path() {
+  local path="$1"
+
+  # Reject absolute paths
+  if [[ "$path" =~ ^/ ]]; then
+    return 1
+  fi
+
+  # Reject parent directory references
+  if [[ "$path" =~ \.\. ]]; then
+    return 1
+  fi
+
+  # Reject paths starting with special characters
+  if [[ "$path" =~ ^[~\$] ]]; then
+    return 1
+  fi
+
+  return 0
+}
+
 # Create symlinks
 _create_symlinks() {
   local main_worktree="$1"
@@ -109,10 +131,22 @@ _create_symlinks() {
     return 0
   fi
 
+  # Check if config file is readable
+  if [[ ! -r "$config_file" ]]; then
+    echo "warning: cannot read config file: ${config_file}" >&2
+    return 1
+  fi
+
   while IFS= read -r file || [[ -n "$file" ]]; do
     # Skip comment lines and empty lines
     [[ "$file" =~ ^[[:space:]]*# ]] && continue
     [[ -z "${file// /}" ]] && continue
+
+    # Validate file path for security
+    if ! _validate_path "$file"; then
+      echo "warning: invalid path in config (security risk): ${file}" >&2
+      continue
+    fi
 
     local source_file="${main_worktree}/${file}"
     local target_file="${target_worktree}/${file}"
@@ -142,16 +176,16 @@ _create_symlinks() {
     local target_dir
     target_dir=$(dirname "$target_file")
     if [[ ! -d "$target_dir" ]]; then
-      mkdir -p "$target_dir" 2>/dev/null || {
-        echo "warning: failed to create directory: ${target_dir}" >&2
+      if ! mkdir -p "$target_dir" 2>/dev/null; then
+        echo "warning: failed to create directory: ${target_dir} (permission denied or invalid path)" >&2
         continue
-      }
+      fi
     fi
 
     # Create symlink
-    ln -s "$source_file" "$target_file" 2>/dev/null || {
-      echo "warning: failed to create symlink: ${target_file}" >&2
-    }
+    if ! ln -s "$source_file" "$target_file" 2>/dev/null; then
+      echo "warning: failed to create symlink: ${target_file} -> ${source_file} (permission denied or invalid path)" >&2
+    fi
   done < "$config_file"
 }
 

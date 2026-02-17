@@ -20,7 +20,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 - English translation of README.md with symbolic link functionality
 - Improved installation instructions with 2-step Homebrew installation method
 
-## [1.0.0] - 2024-01-01
+## [1.0.0] - 2026-02-17
 
 ### Added
 - Initial implementation of `ghq-worktree-select`
