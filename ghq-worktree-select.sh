@@ -17,6 +17,10 @@ Options:
   --version              Show version information
   --help                 Show this help
 
+Creating a new branch:
+  Select "+ Create new branch..." from the branch list to create a new branch
+  and worktree. You'll be prompted for the new branch name and base branch.
+
 Symlink feature:
   Place a .ghq-worktree-symlinks file in the main branch to automatically
   create symlinks for specified files when creating worktrees for other branches.
@@ -218,14 +222,88 @@ ghq-worktree-select() {
   local repo_path
   repo_path="$(ghq root)/${repo}"
 
-  # 2. Select branch
+  # 2. Select branch (with option to create new branch)
   local branch
-  branch=$(git -C "${repo_path}" branch --format='%(refname:short)' | fzf \
-    --prompt="Branch> " \
-    --preview "git -C '${repo_path}' log --oneline -20 --color=always {}")
+  branch=$(
+    {
+      echo "+ Create new branch..."
+      git -C "${repo_path}" branch --format='%(refname:short)'
+    } | fzf \
+      --prompt="Branch> " \
+      --preview "
+        if [[ {} == '+ Create new branch...' ]]; then
+          echo 'Create a new branch and worktree'
+        else
+          git -C '${repo_path}' log --oneline -20 --color=always {}
+        fi
+      "
+  )
 
   if [[ -z "$branch" ]]; then
     return 1
+  fi
+
+  # 2.5. Handle new branch creation
+  if [[ "$branch" == "+ Create new branch..." ]]; then
+    # Get new branch name from user
+    echo -n "New branch name> " >&2
+    read -r new_branch_name
+
+    # Validate input is not empty
+    if [[ -z "$new_branch_name" ]]; then
+      echo "error: branch name is required" >&2
+      return 1
+    fi
+
+    # Validate branch name format
+    if ! git check-ref-format "refs/heads/$new_branch_name" &>/dev/null; then
+      echo "error: invalid branch name: $new_branch_name" >&2
+      return 1
+    fi
+
+    # Check if branch already exists
+    if git -C "${repo_path}" show-ref --verify --quiet "refs/heads/$new_branch_name"; then
+      echo "error: branch already exists: $new_branch_name" >&2
+      return 1
+    fi
+
+    # Select base branch
+    local base_branch
+    base_branch=$(git -C "${repo_path}" branch --format='%(refname:short)' | fzf \
+      --prompt="Base branch> " \
+      --preview "git -C '${repo_path}' log --oneline -20 --color=always {}")
+
+    if [[ -z "$base_branch" ]]; then
+      return 1
+    fi
+
+    # Generate worktree path for new branch
+    local repo_base_path="${repo_path}"
+    repo_base_path=${repo_base_path%+*}
+    local new_worktree_path="${repo_base_path}+${new_branch_name//\//_}"
+
+    # Check if directory already exists
+    if [[ -d "$new_worktree_path" ]]; then
+      echo "error: ${new_worktree_path} already exists" >&2
+      return 1
+    fi
+
+    # Create new worktree with new branch
+    if ! git -C "${repo_path}" worktree add -b "$new_branch_name" "${new_worktree_path}" "${base_branch}"; then
+      return 1
+    fi
+
+    # Create symlinks (except for main/master branch)
+    if [[ "$new_branch_name" != "main" && "$new_branch_name" != "master" ]]; then
+      local worktree_list
+      worktree_list=$(git -C "$repo_path" worktree list --porcelain 2>/dev/null)
+      local main_worktree
+      main_worktree=$(_find_main_worktree "$worktree_list" "$repo_path")
+      _create_symlinks "$main_worktree" "$new_worktree_path"
+    fi
+
+    echo "${new_worktree_path}"
+    return 0
   fi
 
   # 3. Get worktree list (cache)

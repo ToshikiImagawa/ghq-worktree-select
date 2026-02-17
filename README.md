@@ -6,6 +6,7 @@ A shell utility to select a branch from ghq-managed repositories and create/navi
 
 - Select repositories managed by ghq using fzf
 - Select a branch from the chosen repository using fzf
+- Create new branches directly from the fzf interface
 - Automatically create git worktrees
 - Output the created worktree path (use with cd command)
 
@@ -60,6 +61,18 @@ Adding an alias to `.zshrc` or `.bashrc` is convenient:
 ```bash
 alias gws='cd $(ghq-worktree-select)'
 ```
+
+### Creating a New Branch
+
+When selecting a branch, you can choose `+ Create new branch...` to create a new branch and worktree in one operation:
+
+1. Select a repository from ghq-managed repositories
+2. Select `+ Create new branch...` from the branch list
+3. Enter the new branch name (e.g., `feature/new-feature`)
+4. Select the base branch to create the new branch from
+5. A new worktree is automatically created with the new branch
+
+This allows you to quickly start working on a new feature or bug fix without manually creating branches.
 
 ## Worktree Naming Convention
 
