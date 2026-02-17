@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
-# ghq-worktree-select - ghq管理下のリポジトリからブランチを選択してworktreeを作成
+# ghq-worktree-select - Select a branch from ghq-managed repositories and create a worktree
 
-# バージョン情報
+# Version information
 GHQ_WORKTREE_SELECT_VERSION="1.1.0"
 
 # Show help
@@ -34,7 +34,7 @@ Dependencies:
 EOF
 }
 
-# 依存関係チェック
+# Check dependencies
 _ghq_worktree_select_check_dependencies() {
   local deps=(ghq git fzf)
   local missing=()
@@ -52,9 +52,9 @@ _ghq_worktree_select_check_dependencies() {
   fi
 }
 
-# 既存のワークツリーパスを検索
+# Find existing worktree path
 _find_existing_worktree() {
-  local repo_path="$1"
+  local worktree_list="$1"
   local branch="$2"
   local current_worktree=""
   local current_branch=""
@@ -69,60 +69,61 @@ _find_existing_worktree() {
         return 0
       fi
     fi
-  done < <(git -C "$repo_path" worktree list --porcelain 2>/dev/null)
+  done <<< "$worktree_list"
 
   echo ""
 }
 
-# mainブランチのワークツリーパスを検索
+# Find main branch worktree path
 _find_main_worktree() {
-  local repo_path="$1"
+  local worktree_list="$1"
+  local repo_path="$2"
   local main_worktree
 
-  # mainブランチを検索
-  main_worktree=$(_find_existing_worktree "$repo_path" "main")
+  # Search for main branch
+  main_worktree=$(_find_existing_worktree "$worktree_list" "main")
   if [[ -n "$main_worktree" ]]; then
     echo "$main_worktree"
     return 0
   fi
 
-  # masterブランチを検索
-  main_worktree=$(_find_existing_worktree "$repo_path" "master")
+  # Search for master branch
+  main_worktree=$(_find_existing_worktree "$worktree_list" "master")
   if [[ -n "$main_worktree" ]]; then
     echo "$main_worktree"
     return 0
   fi
 
-  # 見つからない場合はリポジトリルートを返す
+  # Return repository root if not found
   echo "$repo_path"
 }
 
-# シンボリックリンクを作成
+# Create symlinks
 _create_symlinks() {
   local main_worktree="$1"
   local target_worktree="$2"
   local config_file="${main_worktree}/.ghq-worktree-symlinks"
 
-  # 設定ファイルが存在しない場合はスキップ
+  # Skip if config file doesn't exist
   if [[ ! -f "$config_file" ]]; then
     return 0
   fi
 
   while IFS= read -r file || [[ -n "$file" ]]; do
-    # コメント行と空行をスキップ
+    # Skip comment lines and empty lines
     [[ "$file" =~ ^[[:space:]]*# ]] && continue
     [[ -z "${file// /}" ]] && continue
 
     local source_file="${main_worktree}/${file}"
     local target_file="${target_worktree}/${file}"
 
-    # ソースファイルが存在しない場合は警告
+    # Warn if source file doesn't exist
     if [[ ! -e "$source_file" ]]; then
       echo "warning: source file not found: ${source_file}" >&2
       continue
     fi
 
-    # ターゲットが既存のシンボリックリンク（同じソース）の場合はスキップ
+    # Skip if target is already a symlink to the same source
     if [[ -L "$target_file" ]]; then
       local link_target
       link_target=$(readlink "$target_file")
@@ -131,22 +132,32 @@ _create_symlinks() {
       fi
     fi
 
-    # ターゲットが既存のファイル/ディレクトリの場合は警告
+    # Warn if target already exists
     if [[ -e "$target_file" || -L "$target_file" ]]; then
       echo "warning: target already exists, skipping: ${target_file}" >&2
       continue
     fi
 
-    # シンボリックリンクを作成
+    # Create parent directory
+    local target_dir
+    target_dir=$(dirname "$target_file")
+    if [[ ! -d "$target_dir" ]]; then
+      mkdir -p "$target_dir" 2>/dev/null || {
+        echo "warning: failed to create directory: ${target_dir}" >&2
+        continue
+      }
+    fi
+
+    # Create symlink
     ln -s "$source_file" "$target_file" 2>/dev/null || {
       echo "warning: failed to create symlink: ${target_file}" >&2
     }
   done < "$config_file"
 }
 
-# メイン関数
+# Main function
 ghq-worktree-select() {
-  # オプション処理
+  # Handle options
   if [[ "$1" == "--version" ]]; then
     echo "ghq-worktree-select version ${GHQ_WORKTREE_SELECT_VERSION}"
     return 0
@@ -157,10 +168,10 @@ ghq-worktree-select() {
     return 0
   fi
 
-  # 依存関係チェック
+  # Check dependencies
   _ghq_worktree_select_check_dependencies || return 1
 
-  # 1. リポジトリを選択
+  # 1. Select repository
   local repo
   repo=$(ghq list | fzf \
     --prompt="Repository> " \
@@ -173,7 +184,7 @@ ghq-worktree-select() {
   local repo_path
   repo_path="$(ghq root)/${repo}"
 
-  # 2. ブランチを選択
+  # 2. Select branch
   local branch
   branch=$(git -C "${repo_path}" branch --format='%(refname:short)' | fzf \
     --prompt="Branch> " \
@@ -183,40 +194,44 @@ ghq-worktree-select() {
     return 1
   fi
 
-  # 3. worktreeパスを生成
+  # 3. Get worktree list (cache)
+  local worktree_list
+  worktree_list=$(git -C "$repo_path" worktree list --porcelain 2>/dev/null)
+
+  # 4. Generate worktree path
   local repo_base_path="${repo_path}"
   repo_base_path=${repo_base_path%+*}
   local worktree_path="${repo_base_path}+${branch//\//_}"
 
-  # 4. 既存ワークツリーをチェック
+  # 5. Check for existing worktree
   local existing_worktree
-  existing_worktree=$(_find_existing_worktree "$repo_path" "$branch")
+  existing_worktree=$(_find_existing_worktree "$worktree_list" "$branch")
   if [[ -n "$existing_worktree" ]]; then
     echo "$existing_worktree"
     return 0
   fi
 
-  # 5. 既存ディレクトリチェック（念のため）
+  # 6. Check for existing directory (just in case)
   if [[ -d "$worktree_path" ]]; then
     echo "warning: ${worktree_path} already exists" >&2
     echo "${worktree_path}"
     return 0
   fi
 
-  # 6. worktree作成
+  # 7. Create worktree
   git -C "${repo_path}" worktree add -q "${worktree_path}" "${branch}" || return 1
 
-  # 7. シンボリックリンク作成（mainブランチ以外の場合）
+  # 8. Create symlinks (except for main/master branch)
   if [[ "$branch" != "main" && "$branch" != "master" ]]; then
     local main_worktree
-    main_worktree=$(_find_main_worktree "$repo_path")
+    main_worktree=$(_find_main_worktree "$worktree_list" "$repo_path")
     _create_symlinks "$main_worktree" "$worktree_path"
   fi
 
   echo "${worktree_path}"
 }
 
-# エイリアス関数（オプション）
+# Alias function (optional)
 gws() {
   local worktree_path
   worktree_path=$(ghq-worktree-select)
@@ -225,7 +240,7 @@ gws() {
   fi
 }
 
-# スクリプトが直接実行された場合はメイン関数を実行
+# Execute main function if script is run directly
 if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
   ghq-worktree-select "$@"
 fi
