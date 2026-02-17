@@ -1,0 +1,98 @@
+name: Create Release
+
+on:
+  push:
+    tags:
+      - 'v*.*.*'
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Extract version from tag
+        id: version
+        run: echo "VERSION=${GITHUB_REF#refs/tags/}" >> $GITHUB_OUTPUT
+
+      - name: Extract changelog for version
+        id: changelog
+        run: |
+          VERSION="${{ steps.version.outputs.VERSION }}"
+
+          # Default message if CHANGELOG.md doesn't exist
+          if [ ! -f CHANGELOG.md ]; then
+            echo "CHANGELOG.md not found" > /tmp/release_notes.md
+            echo "EOF<<RELEASE_NOTES" >> $GITHUB_OUTPUT
+            cat /tmp/release_notes.md >> $GITHUB_OUTPUT
+            echo "RELEASE_NOTES" >> $GITHUB_OUTPUT
+            exit 0
+          fi
+
+          # Extract the version section from CHANGELOG.md
+          # Assumes Keep a Changelog format: ## [version] - date
+          awk -v version="$VERSION" '
+            BEGIN { found=0; content="" }
+            # Detect version section start
+            /^## \[/ {
+              if (found) exit
+              # Support both [v1.0.0] and [1.0.0] formats
+              gsub(/\[v?/, "[", $0)
+              if (index($0, "[" version "]") > 0 || index($0, "[" substr(version, 2) "]") > 0) {
+                found=1
+                next
+              }
+            }
+            # Collect content until next version section
+            found && /^## \[/ { exit }
+            found {
+              if (content != "") content = content "\n"
+              content = content $0
+            }
+            END {
+              if (content != "") print content
+              else print "No changelog entry found for this version."
+            }
+          ' CHANGELOG.md > /tmp/release_notes.md
+
+          # Remove leading and trailing blank lines
+          perl -i -pe 's/^\s*$//g; s/^\n+//; s/\n+$/\n/' /tmp/release_notes.md
+
+          # Set GitHub Output (multiline support)
+          {
+            echo "RELEASE_NOTES<<EOF"
+            cat /tmp/release_notes.md
+            echo "EOF"
+          } >> $GITHUB_OUTPUT
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v1
+        with:
+          name: Release ${{ steps.version.outputs.VERSION }}
+          body: |
+            ## ${{ steps.version.outputs.VERSION }}
+
+            ${{ steps.changelog.outputs.RELEASE_NOTES }}
+
+            ---
+
+            ### インストール
+
+            ```bash
+            # Homebrewでインストール（推奨）
+            brew tap ToshikiImagawa/ghq-worktree-select
+            brew install ghq-worktree-select
+            ```
+
+            ### 手動インストール
+
+            ```bash
+            curl -o ~/.local/bin/ghq-worktree-select https://raw.githubusercontent.com/ToshikiImagawa/ghq-worktree-select/${{ steps.version.outputs.VERSION }}/ghq-worktree-select.sh
+            chmod +x ~/.local/bin/ghq-worktree-select
+            ```
+          draft: false
+          prerelease: false
