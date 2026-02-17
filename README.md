@@ -9,49 +9,21 @@ ghq管理下のリポジトリからブランチを選択してgit worktreeを�
 - git worktreeを自動作成
 - 作成したworktreeのパスを出力（cdコマンドと組み合わせて使用）
 
-## 必要な依存関係
+## インストール
+
+### Homebrew（推奨）
+
+```bash
+brew install ToshikiImagawa/ghq-worktree-select/ghq-worktree-select
+```
+
+Homebrewでインストールすると、依存関係（ghq、fzf、git）が自動的にインストールされます。
+
+### 必要な依存関係
 
 - [ghq](https://github.com/x-motemen/ghq) - リポジトリ管理
 - [fzf](https://github.com/junegunn/fzf) - ファジーファインダー
 - git - バージョン管理（worktree対応版）
-
-## インストール
-
-### 方法1: 手動インストール（curl）
-
-```bash
-# ダウンロード
-curl -o ~/.ghq-worktree-select.sh https://raw.githubusercontent.com/ToshikiImagawa/ghq-worktree-select/main/ghq-worktree-select.sh
-
-# .zshrc または .bashrc に追加
-echo 'source ~/.ghq-worktree-select.sh' >> ~/.zshrc
-```
-
-### 方法2: git clone
-
-```bash
-# クローン
-git clone https://github.com/ToshikiImagawa/ghq-worktree-select.git ~/.ghq-worktree-select
-
-# .zshrc または .bashrc に追加
-echo 'source ~/.ghq-worktree-select/ghq-worktree-select.sh' >> ~/.zshrc
-```
-
-### 方法3: zinit/zplug（zshプラグインマネージャー）
-
-#### zinit の場合
-
-```bash
-# .zshrc に追加
-zinit light ToshikiImagawa/ghq-worktree-select
-```
-
-#### zplug の場合
-
-```bash
-# .zshrc に追加
-zplug "ToshikiImagawa/ghq-worktree-select"
-```
 
 ## 使い方
 
@@ -62,16 +34,16 @@ zplug "ToshikiImagawa/ghq-worktree-select"
 cd $(ghq-worktree-select)
 ```
 
-### 便利なエイリアス
-
-スクリプトには `gws` エイリアス関数が含まれています：
+### オプション
 
 ```bash
-# 使用例
-gws  # リポジトリとブランチを選択して自動的に移動
+ghq-worktree-select --version  # バージョン情報を表示
+ghq-worktree-select --help     # ヘルプを表示
 ```
 
-または、`.zshrc`/`.bashrc`に独自のエイリアスを追加できます：
+### 便利なエイリアス
+
+`.zshrc`または`.bashrc`にエイリアスを追加すると便利です：
 
 ```bash
 alias gws='cd $(ghq-worktree-select)'
@@ -95,13 +67,7 @@ alias gws='cd $(ghq-worktree-select)'
 ## アンインストール
 
 ```bash
-# .zshrc または .bashrc から以下の行を削除
-# source ~/.ghq-worktree-select.sh
-
-# ファイルを削除
-rm ~/.ghq-worktree-select.sh
-# または
-rm -rf ~/.ghq-worktree-select
+brew uninstall ghq-worktree-select
 ```
 
 ## ライセンス
