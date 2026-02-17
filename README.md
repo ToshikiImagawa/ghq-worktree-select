@@ -1,95 +1,125 @@
 # ghq-worktree-select
 
-ghq管理下のリポジトリからブランチを選択してgit worktreeを作成・移動するシェルユーティリティ
+A shell utility to select a branch from ghq-managed repositories and create/navigate to git worktrees
 
-## 機能
+## Features
 
-- ghqで管理しているリポジトリをfzfで選択
-- 選択したリポジトリのブランチをfzfで選択
-- git worktreeを自動作成
-- 作成したworktreeのパスを出力（cdコマンドと組み合わせて使用）
+- Select repositories managed by ghq using fzf
+- Select a branch from the chosen repository using fzf
+- Automatically create git worktrees
+- Output the created worktree path (use with cd command)
 
-## インストール
+## Installation
 
-### Homebrew（推奨）
+### Homebrew (Recommended)
 
-#### 方法1: 2ステップでインストール（推奨）
+#### Method 1: Install in 2 steps (Recommended)
 
 ```bash
-# 1. Tapを追加（最初の一度だけ）
+# 1. Add the tap (only once)
 brew tap ToshikiImagawa/ghq-worktree-select
 
-# 2. インストール
+# 2. Install
 brew install ghq-worktree-select
 ```
 
-#### 方法2: ワンライナーでインストール
+#### Method 2: Install with one-liner
 
 ```bash
 brew install ToshikiImagawa/ghq-worktree-select/ghq-worktree-select
 ```
 
-Homebrewでインストールすると、依存関係（ghq、fzf、git）が自動的にインストールされます。
+Installing via Homebrew automatically installs dependencies (ghq, fzf, git).
 
-### 必要な依存関係
+### Dependencies
 
-- [ghq](https://github.com/x-motemen/ghq) - リポジトリ管理
-- [fzf](https://github.com/junegunn/fzf) - ファジーファインダー
-- git - バージョン管理（worktree対応版）
+- [ghq](https://github.com/x-motemen/ghq) - Repository management
+- [fzf](https://github.com/junegunn/fzf) - Fuzzy finder
+- git - Version control (worktree support required)
 
-## 使い方
+## Usage
 
-### 基本的な使い方
+### Basic Usage
 
 ```bash
-# リポジトリとブランチを選択してworktreeを作成し、移動
+# Select repository and branch to create worktree, then navigate to it
 cd $(ghq-worktree-select)
 ```
 
-### オプション
+### Options
 
 ```bash
-ghq-worktree-select --version  # バージョン情報を表示
-ghq-worktree-select --help     # ヘルプを表示
+ghq-worktree-select --version  # Show version information
+ghq-worktree-select --help     # Show help
 ```
 
-### 便利なエイリアス
+### Convenient Alias
 
-`.zshrc`または`.bashrc`にエイリアスを追加すると便利です：
+Adding an alias to `.zshrc` or `.bashrc` is convenient:
 
 ```bash
 alias gws='cd $(ghq-worktree-select)'
 ```
 
-## worktreeの命名規則
+## Worktree Naming Convention
 
-作成されるworktreeのパスは以下の形式になります：
+Created worktree paths follow this format:
 
 ```
-{リポジトリパス}+{ブランチ名}
+{repository_path}+{branch_name}
 ```
 
-例：
-- リポジトリ: `~/ghq/github.com/user/repo`
-- ブランチ: `feature/new-feature`
-- worktree: `~/ghq/github.com/user/repo+feature_new-feature`
+Example:
+- Repository: `~/ghq/github.com/user/repo`
+- Branch: `feature/new-feature`
+- Worktree: `~/ghq/github.com/user/repo+feature_new-feature`
 
-（ブランチ名の `/` は `_` に置換されます）
+(The `/` in branch names is replaced with `_`)
 
-## アンインストール
+## Symlink Feature
+
+Place a `.ghq-worktree-symlinks` file in the main branch to automatically create symlinks for specified files when creating worktrees for other branches.
+
+### Configuration Example
+
+`.ghq-worktree-symlinks`:
+
+```
+# Environment configuration files
+.envrc
+local.settings
+.env
+```
+
+This allows sharing local configuration files from the main branch across all working branches.
+
+### How to Use
+
+1. Create `.ghq-worktree-symlinks` in the repository root of the main branch
+2. List files to symlink, one per line
+3. When creating a worktree for a working branch, symlinks are automatically created
+
+### Notes
+
+- Lines starting with `#` are treated as comments
+- Existing files will not be overwritten (warnings will be displayed)
+- Warnings will be displayed if source files don't exist, but processing continues
+- Symlinks are not created when creating worktrees for the main or master branch itself
+
+## Uninstall
 
 ```bash
 brew uninstall ghq-worktree-select
 ```
 
-## ライセンス
+## License
 
 MIT License
 
-## 貢献
+## Contributing
 
-Issue・Pull Requestを歓迎します！
+Issues and Pull Requests are welcome!
 
-## 作者
+## Author
 
 [Toshiki Imagawa](https://github.com/ToshikiImagawa)
