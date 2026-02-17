@@ -4,6 +4,26 @@
 # バージョン情報
 GHQ_WORKTREE_SELECT_VERSION="1.0.0"
 
+# ヘルプ表示
+_ghq_worktree_select_show_help() {
+  cat <<EOF
+ghq-worktree-select - ghq管理下のリポジトリからブランチを選択してworktreeを作成
+
+使い方:
+  ghq-worktree-select    リポジトリとブランチを選択してworktreeパスを出力
+  gws                    ghq-worktree-selectを実行してディレクトリを移動
+
+オプション:
+  --version              バージョン情報を表示
+  --help                 このヘルプを表示
+
+必要な依存関係:
+  - ghq: リポジトリ管理
+  - fzf: ファジーファインダー
+  - git: バージョン管理 (worktree対応版)
+EOF
+}
+
 # 依存関係チェック
 _ghq_worktree_select_check_dependencies() {
   local deps=(ghq git fzf)
@@ -24,6 +44,17 @@ _ghq_worktree_select_check_dependencies() {
 
 # メイン関数
 ghq-worktree-select() {
+  # オプション処理
+  if [[ "$1" == "--version" ]]; then
+    echo "ghq-worktree-select version ${GHQ_WORKTREE_SELECT_VERSION}"
+    return 0
+  fi
+
+  if [[ "$1" == "--help" ]]; then
+    _ghq_worktree_select_show_help
+    return 0
+  fi
+
   # 依存関係チェック
   _ghq_worktree_select_check_dependencies || return 1
 
@@ -71,3 +102,8 @@ gws() {
     cd "$worktree_path" || return 1
   fi
 }
+
+# スクリプトが直接実行された場合はメイン関数を実行
+if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
+  ghq-worktree-select "$@"
+fi
