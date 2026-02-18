@@ -52,7 +52,7 @@ ghq-worktree-select() {
   if [[ "$branch" == "+ Create new branch..." ]]; then
     # Get new branch name from user
     echo -n "New branch name> " >&2
-    read -r new_branch_name
+    read -r new_branch_name </dev/tty
 
     # Validate input is not empty
     if [[ -z "$new_branch_name" ]]; then
@@ -94,7 +94,7 @@ ghq-worktree-select() {
     fi
 
     # Create new worktree with new branch
-    if ! git -C "${repo_path}" worktree add -b "$new_branch_name" "${new_worktree_path}" "${base_branch}"; then
+    if ! git -C "${repo_path}" worktree add -q -b "$new_branch_name" "${new_worktree_path}" "${base_branch}"; then
       return 1
     fi
 
