@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [1.2.1] - 2026-02-18
+
+### Fixed
+- Fixed branch creation in subshell context
+  - Read branch name from `/dev/tty` to support `cd $(ghq-worktree-select)` usage
+  - Suppress git output with `-q` flag to prevent "too many arguments" error
+
 ## [1.2.0] - 2026-02-18
 
 ### Added
