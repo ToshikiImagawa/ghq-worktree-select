@@ -17,3 +17,7 @@
 
 # Local settings for Claude
 *.local.json
+
+# Build artifacts
+dist/
+*.tar.gz

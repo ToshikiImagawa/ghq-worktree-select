@@ -1,0 +1,2 @@
+#!/usr/bin/env bash
+# ghq-worktree-select - Select a branch from ghq-managed repositories and create a worktree

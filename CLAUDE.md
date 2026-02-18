@@ -6,15 +6,22 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ghq-worktree-selectは、ghq管理下のリポジトリからブランチを選択し、git worktreeの作成・移動を支援するシェルユーティリティです。
 
-### 主要ファイル
+### プロジェクト構造
 
-- `ghq-worktree-select.sh`: メインスクリプト（全ての機能を含む単一ファイル）
+- `src/`: ソースファイル（モジュール化されたBashスクリプト）
+  - `functions/`: 関数モジュール（依存関係順に番号付き）
+  - `help.txt`: ヘルプテキスト
+  - `config.sh`: 設定（バージョン番号）
+  - `header.txt`, `footer.txt`: スクリプトの開始・終了部分
+  - `alias.sh`: gws()エイリアス関数
+- `dist/`: ビルド生成物（gitignore対象、ビルド時に自動生成）
+- `build.sh`: ビルドスクリプト
 - `CHANGELOG.md`: Keep a Changelog形式の変更履歴
 - `.github/workflows/release.yml`: タグpush時の自動リリースワークフロー
 
 ### アーキテクチャ
 
-単一のBashスクリプトで完結する設計。主要な関数構成:
+モジュール化されたBashスクリプトをビルドして単一の実行ファイルを生成する設計。主要な関数構成:
 
 - `ghq-worktree-select()`: メイン処理（リポジトリ選択 → ブランチ選択 → worktree作成 → symlink作成）
 - `_find_existing_worktree()`: 既存worktreeの検索
@@ -23,19 +30,21 @@ ghq-worktree-selectは、ghq管理下のリポジトリからブランチを選�
 - `_create_symlinks()`: `.ghq-worktree-symlinks`設定ファイルに基づくシンボリックリンク作成
 - `gws()`: エイリアス関数（worktree作成後に`cd`を実行）
 
-## 開発コマンド
+## 開発ワークフロー
 
-### 基本動作確認
+### ビルドと動作確認
 
 ```bash
-# スクリプトを直接実行
-./ghq-worktree-select.sh
+# 1. src/ 配下のファイルを編集
+# 2. ビルド
+./build.sh
 
-# バージョン確認
-./ghq-worktree-select.sh --version
+# 3. テスト
+./dist/ghq-worktree-select --version
+./dist/ghq-worktree-select --help
+./dist/ghq-worktree-select
 
-# ヘルプ表示
-./ghq-worktree-select.sh --help
+# 4. コミット・プッシュ（src/のみをバージョン管理、dist/はgitignore対象）
 ```
 
 ### 依存関係
@@ -52,22 +61,25 @@ command -v ghq && command -v fzf && command -v git
 
 ### バージョン更新手順
 
-1. `ghq-worktree-select.sh`内の`GHQ_WORKTREE_SELECT_VERSION`変数を更新
+1. `src/config.sh`内の`GHQ_WORKTREE_SELECT_VERSION`変数を更新
 2. `CHANGELOG.md`を更新（`/changelog`スキルを使用可能）
-3. コミット・プッシュ
-4. Gitタグを作成（`v1.x.x`形式）してpush → GitHub Actionsが自動リリース
+3. ビルドして動作確認: `./build.sh && ./dist/ghq-worktree-select --version`
+4. コミット・プッシュ
+5. Gitタグを作成（`v1.x.x`形式）してpush → GitHub Actionsが自動ビルド・リリース
 
 ```bash
 # タグ作成例
-git tag v1.2.0
-git push origin v1.2.0
+git tag v1.3.0
+git push origin v1.3.0
 ```
 
 ### リリース自動化
 
 `.github/workflows/release.yml`により、`v*.*.*`形式のタグがpushされると:
-1. CHANGELOG.mdから該当バージョンのセクションを抽出
-2. GitHubリリースを自動作成
+1. `build.sh`でスクリプトをビルド
+2. ビルド成果物をtar.gzアーカイブに圧縮
+3. CHANGELOG.mdから該当バージョンのセクションを抽出
+4. GitHubリリースを自動作成し、アーカイブを配布
 
 ## コーディングガイドライン
 

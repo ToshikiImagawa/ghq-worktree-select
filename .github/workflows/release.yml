@@ -69,6 +69,10 @@ jobs:
             echo "EOF"
           } >> $GITHUB_OUTPUT
 
+      - name: Build script
+        run: |
+          bash build.sh
+
       - name: Create distribution archive
         id: archive
         run: |
@@ -76,13 +80,13 @@ jobs:
           ARCHIVE_NAME="ghq-worktree-select-${VERSION}.tar.gz"
 
           # Create temporary directory for distribution
-          mkdir -p dist/ghq-worktree-select
+          mkdir -p dist-release/ghq-worktree-select
 
-          # Copy only the main script
-          cp ghq-worktree-select.sh dist/ghq-worktree-select/
+          # Copy the built script
+          cp dist/ghq-worktree-select dist-release/ghq-worktree-select/
 
           # Create tar.gz (with proper structure for Homebrew)
-          cd dist
+          cd dist-release
           tar -czf "../${ARCHIVE_NAME}" ghq-worktree-select/
           cd ..
 
