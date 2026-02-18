@@ -44,7 +44,10 @@ ghq-worktree-selectは、ghq管理下のリポジトリからブランチを選�
 ./dist/ghq-worktree-select --help
 ./dist/ghq-worktree-select
 
-# 4. コミット・プッシュ（src/のみをバージョン管理、dist/はgitignore対象）
+# 4. パッケージング（オプション、ローカルでテスト可能）
+./package.sh  # または ./package.sh <version>
+
+# 5. コミット・プッシュ（src/のみをバージョン管理、dist/はgitignore対象）
 ```
 
 ### 依存関係
@@ -77,9 +80,15 @@ git push origin v1.3.0
 
 `.github/workflows/release.yml`により、`v*.*.*`形式のタグがpushされると:
 1. `build.sh`でスクリプトをビルド
-2. ビルド成果物をtar.gzアーカイブに圧縮
+2. `package.sh`でビルド成果物をtar.gzアーカイブに圧縮
 3. CHANGELOG.mdから該当バージョンのセクションを抽出
 4. GitHubリリースを自動作成し、アーカイブを配布
+
+**ローカルでテスト**:
+```bash
+./build.sh
+./package.sh v1.3.0  # バージョンを指定、または省略でconfig.shから取得
+```
 
 ## コーディングガイドライン
 
