@@ -1,0 +1,28 @@
+ghq-worktree-select - Select a branch from ghq-managed repositories and create a worktree
+
+Usage:
+  ghq-worktree-select    Select repository and branch, then output worktree path
+  gws                    Execute ghq-worktree-select and move to the directory
+
+Options:
+  --version              Show version information
+  --help                 Show this help
+
+Creating a new branch:
+  Select "+ Create new branch..." from the branch list to create a new branch
+  and worktree. You'll be prompted for the new branch name and base branch.
+
+Symlink feature:
+  Place a .ghq-worktree-symlinks file in the main branch to automatically
+  create symlinks for specified files when creating worktrees for other branches.
+
+  Example (.ghq-worktree-symlinks):
+    # Environment configuration files
+    .envrc
+    local.settings
+    .env
+
+Dependencies:
+  - ghq: Repository management
+  - fzf: Fuzzy finder
+  - git: Version control (worktree support required)
