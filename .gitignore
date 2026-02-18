@@ -18,6 +18,9 @@
 # Local settings for Claude
 *.local.json
 
+# ghq worktree symlinks
+.ghq-worktree-symlinks
+
 # Build artifacts
 dist/
 *.tar.gz

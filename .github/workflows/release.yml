@@ -77,25 +77,13 @@ jobs:
         id: archive
         run: |
           VERSION="${{ steps.version.outputs.VERSION }}"
-          ARCHIVE_NAME="ghq-worktree-select-${VERSION}.tar.gz"
 
-          # Create temporary directory for distribution
-          mkdir -p dist-release/ghq-worktree-select
-
-          # Copy the built script
-          cp dist/ghq-worktree-select dist-release/ghq-worktree-select/
-
-          # Create tar.gz (with proper structure for Homebrew)
-          cd dist-release
-          tar -czf "../${ARCHIVE_NAME}" ghq-worktree-select/
-          cd ..
+          # Use package.sh script
+          bash package.sh "${VERSION}"
 
           # Output archive name for next step
+          ARCHIVE_NAME="dist/ghq-worktree-select-${VERSION}.tar.gz"
           echo "ARCHIVE_NAME=${ARCHIVE_NAME}" >> $GITHUB_OUTPUT
-
-          # Verify archive contents
-          echo "Archive contents:"
-          tar -tzf "${ARCHIVE_NAME}"
 
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v1
