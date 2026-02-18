@@ -26,7 +26,7 @@ cp dist/ghq-worktree-select dist-release/ghq-worktree-select/
 
 # Create tar.gz (with proper structure for Homebrew)
 cd dist-release
-tar -czf "../${ARCHIVE_NAME}" ghq-worktree-select/
+tar -czf "../dist/${ARCHIVE_NAME}" ghq-worktree-select/
 cd ..
 
 # Clean up temporary directory
@@ -35,8 +35,8 @@ rm -rf dist-release
 # Verify archive contents
 echo ""
 echo "==> Archive contents:"
-tar -tzf "${ARCHIVE_NAME}"
+tar -tzf "dist/${ARCHIVE_NAME}"
 
 echo ""
-echo "==> Created: ${ARCHIVE_NAME}"
-echo "==> Size: $(du -h "${ARCHIVE_NAME}" | cut -f1)"
+echo "==> Created: dist/${ARCHIVE_NAME}"
+echo "==> Size: $(du -h "dist/${ARCHIVE_NAME}" | cut -f1)"
